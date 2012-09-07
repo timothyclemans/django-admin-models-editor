@@ -15,19 +15,46 @@ function createModel() {
 	});
 }
 
+function saveModel() {
+	var content = 'save=True&'+$("#create_model_form").serialize();
+
+	$.post('/admin/create_model/', content,function(response){
+	  $('#code').val(response);
+	});
+}
+
+function syncdb() {
+
+	$.get('/admin/create_model/', 'syncdb=true',function(response){
+	  if (response.success == false) {
+	      $('#error').text('Syncdb failed');
+      }
+	  $('#cmd_output').text(response.cmd_output);
+	});
+}
+
 function removeField(fieldId) {
     $('#field_'+fieldId).remove();
 }
 
 function addField(fieldType) {
     var html = '<tr id="field_'+id+'"><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="hidden" name="field_'+id+'_type" value="'+fieldType+'"><input name="field_'+id+'_name" type="text" value="" style="width:100px;" /></td><td>'+fieldType+'</td><td><input type="checkbox"  name="field_'+id+'_unique" /></td>';
-    switch (fieldType) {
-	    case 'char':
-		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value=""  style="width:20px;"/></td>';
+    if (fieldType != 'Char') {
+	    html += '<td><input type="checkbox" name="field_'+id+'_null" /> </td>';
+	} else {
+	    html += '<td></td>';
+    }
+	html += '<td><input type="checkbox" name="field_'+id+'_blank" /> </td>'
+		
+	switch (fieldType) {
+	    case 'Char':
+		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;"/></td>';
 			break;
-	    case 'foreignkey':
+	    case 'ForeignKey':
 		    html += '<td> <table><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value=""/></td></table></td>';
 			break;
+	    default:
+	        html += '<td></td>';
 	}
 	html += '</tr>';
     $('#fields').append(html);
@@ -35,8 +62,19 @@ function addField(fieldType) {
 	$('#fields').show();
 }
 
+function getFilePath() {
+	$.get('/admin/create_model/', 'get_file_path=true',function(response){
+	  $('#file_path').val(response);
+	});
+}
+
 $(function() {
-    var timer = setInterval( createModel, 5000);
+    var generate_code_interval = setInterval( createModel, 1000);
+	
+	getFilePath(); 
+	$('#add_field_buttons input').click(function() {
+	    addField($(this).val());
+	});
 });
     </script>
 	<style>
@@ -82,19 +120,46 @@ height:500px;
 {% csrf_token %}
 <strong>Model name:</strong> <input type="text" name="name" /><br/>
 <table id="fields">
-<th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th></th></tr></table>
-<strong>Add field:</strong> <input type="button" value="Char" onclick="addField('char');" />
-<input type="button" value="TextField" onclick="addField('text');"/>
-<input type="button" value="TimeField" onclick="addField('time');"/>
-<br/>
-<input type="button" value="ForeignKey" onclick="addField('foreignkey');"/>
-<input type="button" value="OneToOne" onclick="addField('onetoone');"/>
-<input type="button" value="ManyToMany" onclick="addField('manytomany');"/>
+<th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Null</th><th>Blank</th><th></th></tr></table>
+<div id="add_field_buttons">
+<strong>Add field:</strong> 
 
+<input type="button" value="Auto" />
+<input type="button" value="BigInteger"/>
+<input type="button" value="Boolean" />
+<input type="button" value="Char" />
+<input type="button" value="CommaSeparatedInteger" />
+<input type="button" value="Date" />
+<input type="button" value="DateTime" />
+<input type="button" value="Decimal" />
+<input type="button" value="Email" />
+<input type="button" value="File" />
+<input type="button" value="FilePath" />
+<input type="button" value="Float" />
+<input type="button" value="Image" />
+<input type="button" value="Integer" />
+<input type="button" value="IPAddress" />
+<input type="button" value="GenericIPAddress" />
+<input type="button" value="NullBoolean" />
+<input type="button" value="PositiveInteger" />
+<input type="button" value="PositiveSmallInteger" />
+<input type="button" value="Slug" />
+<input type="button" value="SmallInteger" />
+<input type="button" value="Text" />
+<input type="button" value="Time" />
+<input type="button" value="Url" />
+<br/>
+<input type="button" value="ForeignKey" />
+<input type="button" value="OneToOne" />
+<input type="button" value="ManyToMany" />
+</div>
 
 <br/>
-<input type="button" value="Add code for the model to the source code" onclick="createModel();" />
+<strong>File path for models.py:</strong> <input type="text" id="file_path" name="file_path" style="width:800px" /><br/>
+<input type="button" value="Add code for the model to the source code" onclick="saveModel();" />
 <input type="button" value="Syncdb" onclick="syncdb();" />
+<div id="error"></div>
+<pre id="cmd_output"></pre>
 </form>
 <textarea id="code"></textarea>
 {% endif %}{% endblock %}
