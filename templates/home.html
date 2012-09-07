@@ -1,12 +1,17 @@
 {% extends "base.html" %}
 {% block title %}{% endblock %}
 {% block main %}
-<form action="/create_model/" method="post" id="create_model_form">
+<form action="/admin/create_model/" method="post" id="create_model_form">
 
 <strong>Model name:</strong> <input type="text" name="name" /><br/>
 <table id="fields"><th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th></th></tr></table>
 <strong>Add field:</strong> <input type="button" value="Char" onclick="addField('char');" />
-<input type="button" value="ForeignKey" onclick="addField('foreignkey');"/><br/>
+<input type="button" value="ForeignKey" onclick="addField('foreignkey');"/>
+<input type="button" value="ManyToMany" onclick="addField('manytomany');"/>
+<input type="button" value="OneToOne" onclick="addField('onetoone');"/>
+<input type="button" value="TextField" onclick="addField('text');"/>
+<input type="button" value="TimeField" onclick="addField('time');"/>
+<br/>
 <input type="button" value="Create Model" onclick="createModel();" />
 </form>
 <textarea id="code"></textarea>

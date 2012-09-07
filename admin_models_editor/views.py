@@ -28,7 +28,7 @@ def create_model(request):
     #response = 'hello' + 'number of fields: %s' % (get_number_of_fields(request.POST))
     #response += str([list(findall(i, '_')) for i in request.POST.keys() if '_' in i])
     #response += str([(get_field_id(i[0]), i[1]) for i in request.POST.keys() if i.startswith('field_')])
-    code = "class %s(models.Model):\n" % (request.POST['name']) 
+    code = "class %s(models.Model):\n" % (request.POST['name'].capitalize()) 
     for field_id in get_field_ids(request.POST):
         field = get_field_dict(field_id, request.POST)
         
@@ -37,6 +37,9 @@ def create_model(request):
             if 'max_length' in field:
                 arguments.append("max_length=%s" % (field['max_length']))
         if field['type'] == 'foreignkey':
+            if 'self' in field:
+                arguments.append("'self'")
+        elif 'related_model' in field:
             arguments.append("'%s'" % (field['related_model']))
         if 'unique' in field:
             arguments.append("unique=True")
