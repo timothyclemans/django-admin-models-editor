@@ -35,7 +35,7 @@ function listApps() {
 	   if (!apps[0][2]) {
 	     
 	     $('#is_app_installed').html('This app is not installed. <input type="button" value="Install this app" onclick="installApp(\''+apps[0][0]+'\');" />');
-		 alert($('#is_app_installed').html());
+
 	   }
 	});
 }
@@ -51,9 +51,9 @@ function syncdb() {
 }
 
 function installApp(app) {
-    alert('install app');
+
 	$.get('/admin/create_model/', 'install_app='+app,function(response){
-	  alert('ia2');
+
 	  $('#is_app_installed').html('');
 	});
 }
