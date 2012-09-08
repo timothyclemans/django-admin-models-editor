@@ -62,21 +62,92 @@ function removeField(fieldId) {
     $('#field_'+fieldId).remove();
 }
 
+function getDefaultName(fieldType) {
+    switch (fieldType) {
+	    case 'Boolean':
+		    return 'is_';
+			break;
+	    case 'Date':
+		    return 'date';
+			break;
+	    case 'DateTime':
+		    return 'datetime';
+			break;
+	    case 'Email':
+		    return 'email';
+			break;
+		case 'NullBoolean':
+		    return 'is_';
+			break;
+		case 'Slug':
+		    return 'slug';
+			break;
+		case 'Time':
+		    return 'time';
+			break;
+		case 'Url':
+		    return 'url';
+			break;
+	    default:
+		    return ''
+			break;
+	}
+}
+
 function addField(fieldType) {
-    var html = '<tr id="field_'+id+'"><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="hidden" name="field_'+id+'_type" value="'+fieldType+'"><input name="field_'+id+'_name" type="text" value="" style="width:100px;" /></td><td>'+fieldType+'</td><td><input type="checkbox"  name="field_'+id+'_unique" /></td>';
-    if (fieldType != 'Char') {
+    var html = '<tr id="field_'+id+'"><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="hidden" name="field_'+id+'_type" value="'+fieldType+'"><input class="required" name="field_'+id+'_name" type="text" value="'+getDefaultName(fieldType)+'" style="width:100px;" /></td><td>'+fieldType+'</td><td><input type="checkbox"  name="field_'+id+'_unique" /></td>';
+    if (fieldType != 'Char' && fieldType != 'Boolean' && fieldType != 'NullBoolean') {
 	    html += '<td><input type="checkbox" name="field_'+id+'_null" /> </td>';
 	} else {
 	    html += '<td></td>';
     }
 	html += '<td><input type="checkbox" name="field_'+id+'_blank" /> </td>'
+	if ((fieldType == 'Boolean') || (fieldType == 'NullBoolean')) {
+	    html += '<td><input type="radio" name="field_'+id+'_default" value="no_default" checked> No default<br/><input type="radio" name="field_'+id+'_default" value="true"> True<br/><input type="radio" name="field_'+id+'_default" value="false"> False</td>'
+	} else {
+	    html += '<td><input name="field_'+id+'_default" type="text" value="" style="width:100px;" /></td>'
+	}
 		
 	switch (fieldType) {
 	    case 'Char':
-		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;"/></td>';
+		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td>';
 			break;
-	    case 'ForeignKey':
-		    html += '<td> <table><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value=""/></td></table></td>';
+		case 'CommaSeparatedInteger':
+		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td>';
+			break;
+
+	    case 'Date':
+		    html += '<td> <input type="checkbox" name="field_'+id+'_auto_now" /> Auto now<br/><input type="checkbox" name="field_'+id+'_auto_now_add" /> Auto now add</td>';
+			break;
+	    case 'DateTime':
+		    html += '<td> <input type="checkbox" name="field_'+id+'_auto_now" /> Auto now<br/><input type="checkbox" name="field_'+id+'_auto_now_add" /> Auto now add</td>';
+			break;
+	    case 'Decimal':
+		    html += '<td> <table><tr><th>Max digits:</th><td> <input name="field_'+id+'_max_digits" type="text" value="5"  style="width:20px;" class="required"/></td></tr><tr><th>Decimal places:</th><td> <input name="field_'+id+'_decimal_places" type="text" value="2"  style="width:20px;" class="required"/></td></tr></table></td>';
+			break;
+		case 'Email':
+		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="75"  style="width:20px;"/></td>';
+			break;
+		case 'File':
+		    html += '<td> <strong>Upload to:</strong> <input name="field_'+id+'_upload_to" type="text" value=""  style="width:200px;" class="required" /></td>';
+			break;
+		case 'ForeignKey':
+		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
+			break;
+		case 'Image':
+		    html += '<td> <table><tr><th>Upload to:</th><td> <input name="field_'+id+'_upload_to" type="text" value=""  style="width:200px;" class="required" /></td></tr><tr><th>Height:</th><td><input name="field_'+id+'_height" type="text" value=""  style="width:20px;"/></td></tr><tr><th>Width:</th><td><input name="field_'+id+'_width" type="text" value=""  style="width:20px;"/></td></tr></table></td>';
+			break;
+		case 'ManyToMany':
+		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
+			break;
+		case 'OneToOne':
+		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
+			break;
+		case 'Slug':
+		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="50"  style="width:20px;" /></td>';
+			break;
+		case 'Url':
+		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="200"  style="width:20px;" /></td>';
 			break;
 	    default:
 	        html += '<td></td>';
@@ -154,6 +225,23 @@ height:200px;
 #model_editor, #hide_model_editor {
 display:none;
 }
+
+#model_editor table {
+background:#FFF;
+}
+
+input.required, tr.required td, tr.required th, select.required {
+border-color:red;
+}
+
+tr.required th, tr.required td {
+border:none;
+}
+
+input.error {
+background:#ff7e7e;
+color:#FFF;
+}
 	</style>
 {% endblock %}
 {% block coltype %}colMS{% endblock %}
@@ -168,12 +256,13 @@ display:none;
 <div id="model_editor">
 <form action="/create_model/" class="module" method="post" id="create_model_form">
 {% csrf_token %}
-<strong>App:</strong> <select id="apps">
+Boxes with red border must be filled out<br/>
+<strong>App:</strong> <select id="apps" class="required">
 
 </select><span id="is_app_installed"></span><br/>
-<strong>Model name:</strong> <input type="text" name="name" /><br/>
+<strong>Model name:</strong> <input type="text" name="name" class="required" /><br/>
 <table id="fields">
-<th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Null</th><th>Blank</th><th></th></tr></table>
+<th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Null</th><th>Blank</th><th>Default</th><th></th></tr></table>
 <div id="add_field_buttons">
 <strong>Add field:</strong> 
 

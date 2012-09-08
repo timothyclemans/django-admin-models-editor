@@ -12,7 +12,8 @@ def autoregisterm(*app_list):
                 pass
 def autoregister(apps):
     for app in apps:
-        if not app.startswith('django'):
+        # exclude django apps
+        if not app.startswith('django.'):
             try:
                 autoregisterm(app)
             except:

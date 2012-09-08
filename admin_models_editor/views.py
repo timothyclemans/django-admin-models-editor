@@ -3,6 +3,12 @@ import os
 import json
 import logging
 
+def is_one_of(items, target):
+    for item in items:
+        if item == target:
+            return True
+    return False
+
 def findall(L, value, start=0):
     return [i for i, x in enumerate(L) if x == value][start:]
         
@@ -123,14 +129,45 @@ def create_model(request):
                 is_name_field = True
             if 'max_length' in field:
                 arguments.append("max_length=%s" % (field['max_length']))
-        if field['type'] == 'ForeignKey':
+        elif field['type'] == 'Decimal':
+            if 'max_digits' in field:
+                arguments.append("max_digits=%s" % (field['max_digits']))
+            if 'decimal_places' in field:
+                arguments.append("decimal_places=%s" % (field['decimal_places']))
+        elif is_one_of(['Email', 'Slug', 'Url'], field['type']):
+            defaults = {'Email': 75, 'Slug': 50, 'Url': 200}
+            if 'max_length' in field:
+                if not int(field['max_length']) == defaults[field['type']]:
+                    arguments.append("max_length=%s" % (field['max_length']))
+        elif is_one_of(['File', 'Image'], field['type']):
+            if 'upload_to' in field:
+                arguments.append("upload_to='%s'" % (field['upload_to']))
+            if field['type'] == 'Image':
+                if 'height' in field:
+                    arguments.append("height=%s" % (field['height']))
+                if 'width' in field:
+                    arguments.append("width=%s" % (field['width']))
+        elif is_one_of(['ForeignKey', 'ManyToMany', 'OneToOne'], field['type']):
             if 'self' in field:
                 arguments.append("'self'")
-        elif 'related_model' in field:
-            arguments.append("'%s'" % (field['related_model']))
-        for i in ['unique', 'null', 'blank']:
+            elif 'related_model' in field:
+                related_model = field['related_model'].strip("'")
+                related_model = related_model.strip('"')
+                arguments.append("'%s'" % (related_model))
+        for i in ['unique', 'null', 'blank', 'auto_now', 'auto_now_add']:
             if i in field:
                 arguments.append("%s=True" % (i))
+        if 'default' in field:
+            if field['default']:
+                if is_one_of(['Char', 'Text'], field['type']):
+                    arguments.append("default='%s'" % (field['default']))
+                elif is_one_of(['Boolean', 'NullBoolean'], field['type']):
+                    if field['default'] == 'true':
+                        arguments.append("default=True")
+                    elif field['default'] == 'false':
+                        arguments.append("default=False")
+                else:
+                    arguments.append("default=%s" % (field['default']))
         code += "    %s = models.%s(%s)\n" % (field['name'], get_field_class(field['type']), ', '.join(arguments))
     if is_name_field:
         code += """

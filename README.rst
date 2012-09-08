@@ -27,3 +27,10 @@ Author
 ======
 
 Timothy Clemans <timothy.clemans@gmail.com>
+
+To do
+=====
+
+* Support choices option
+* Make models editable
+* Make a graphical interface, see http://gaesql.appspot.com/ and http://code.google.com/p/uml-to-django/
