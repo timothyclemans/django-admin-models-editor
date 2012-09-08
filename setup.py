@@ -6,9 +6,9 @@ except:
     README = None
 
 setup(
-    name='django-admin-sortable',
-    version=__import__('adminsortable').__version__,
-    description='Drag and drop sorting for models and inline models in Django admin',
+    name='django-admin-models-editor',
+    version='0.01',
+    description='Create models from the admin interface',
     long_description=README,
     license='APL',
     author='Timothy Clemans',
