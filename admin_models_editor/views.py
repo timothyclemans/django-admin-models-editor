@@ -48,6 +48,11 @@ def create_model(request):
 
         
         return HttpResponse(os.path.join(os.getcwd(), "models.py"))
+    if 'list_apps' in request.GET:
+        apps = [(dirname.strip('./'), os.path.join(os.path.join(os.getcwd(), dirname.strip('./')), "models.py")) for dirname, dirnames, filenames in os.walk('.') if 'views.py' in os.listdir(dirname) or 'urls.py' in os.listdir(dirname)]
+        response_data = {'apps': apps}
+        
+        return HttpResponse(json.dumps(response_data), mimetype="application/json")
         
     #response = 'hello' + 'number of fields: %s' % (get_number_of_fields(request.POST))
     #response += str([list(findall(i, '_')) for i in request.POST.keys() if '_' in i])

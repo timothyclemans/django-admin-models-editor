@@ -20,7 +20,7 @@ to settings.py and add ``import os`` and ``BASE_DIR = os.getcwd()`` to settings.
 
 5. Enable admin
 
-6. Add ``    url(r'^admin/create_model/', 'admin_models_editor.views.create_model'),`` to urls.py
+6. Add ``url(r'^admin/create_model/', 'admin_models_editor.views.create_model'),`` to urls.py
 
 Author
 ======
