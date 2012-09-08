@@ -4,7 +4,7 @@ Overview
 This app aims to let admins create and edit models within the admin interface.
 It is not ready for production use.
 
-.. image:: screenshot.png
+.. image:: https://raw.github.com/timothyclemans/django-admin-models-editor/master/screenshot.png
 
 Install
 =======
