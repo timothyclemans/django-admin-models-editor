@@ -7,7 +7,8 @@
     <script type="text/javascript">
 var apps = [];
 var id = 0;
-
+var choices_id = 0;
+var choices_choice_ids = [];
 function createModel() {
 	var content = $("#create_model_form").serialize();
 
@@ -110,7 +111,7 @@ function addField(fieldType) {
 		
 	switch (fieldType) {
 	    case 'Char':
-		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td>';
+		    html += '<td> <table><tr><th>Max length:</th><td><input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td></tr><tr><th>Choices:</th><td><input type="button" value="Add choices" onclick="addChoices();" /><div id="choices_radio_buttons_field_'+id+'"><input type="radio" name="field_'+id+'_choices" value="no_choices"> No choices</div></td></tr></table></td>';
 			break;
 		case 'CommaSeparatedInteger':
 		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td>';
@@ -132,16 +133,16 @@ function addField(fieldType) {
 		    html += '<td> <strong>Upload to:</strong> <input name="field_'+id+'_upload_to" type="text" value=""  style="width:200px;" class="required" /></td>';
 			break;
 		case 'ForeignKey':
-		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
+		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').val(\'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
 			break;
 		case 'Image':
 		    html += '<td> <table><tr><th>Upload to:</th><td> <input name="field_'+id+'_upload_to" type="text" value=""  style="width:200px;" class="required" /></td></tr><tr><th>Height:</th><td><input name="field_'+id+'_height" type="text" value=""  style="width:20px;"/></td></tr><tr><th>Width:</th><td><input name="field_'+id+'_width" type="text" value=""  style="width:20px;"/></td></tr></table></td>';
 			break;
 		case 'ManyToMany':
-		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
+		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').val(\'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr><tr><th>Through:</th><td><input name="field_'+id+'_through" type="text" value="" /></td></tr></table></td>';
 			break;
 		case 'OneToOne':
-		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
+		    html += '<td> <table><tr class="required" style="border:1px solid red;"><th>Related model:</th><td><input type="checkbox" onclick="$(\'#related_model_'+id+'\').val(\'\').toggle();" name="field_'+id+'_self"/> Self<br/> <input id="related_model_'+id+'" name="field_'+id+'_related_model" type="text" value="" /></td></tr></table></td>';
 			break;
 		case 'Slug':
 		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="50"  style="width:20px;" /></td>';
@@ -162,6 +163,25 @@ function getFilePath() {
 	$.get('/admin/create_model/', 'get_file_path=true',function(response){
 	  $('#file_path').val(response);
 	});
+}
+
+function addChoice(target_choices_id) {
+    element = $('#choices_'+target_choices_id)
+    element.after('<tr><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="text" name="choices_'+target_choices_id+'_choice_'+choices_choice_ids[target_choices_id]+'_value" style="width:200px;" /></td><td><input type="text" style="width:200px;" name="choices_'+target_choices_id+'_choice_'+choices_choice_ids[target_choices_id]+'_label"/></td></tr>');
+    choices_choice_ids[target_choices_id] += 0;
+}
+
+function addChoices() {
+    $('#choices').show().append('<tr class="choices_'+choices_id+'" id="choices_'+choices_id+'" style="background:#ccc;"><th><input type="button" value="X" onclick="removeChoices('+choices_id+')"/></th><th colspan="2">Choices name: <input type="text" value="_CHOICES" name="choices_'+choices_id+'_name" ><input type="button" value="Add choice" onclick="addChoice('+choices_id+')"/></th></tr>');
+    addChoice(choices_id);
+	choices_choice_ids.push(0);
+	// alert(choices_choice_ids);
+	choices_id += 1;
+	
+}
+
+function removeChoices(target_id) {
+    $('.choices_'+target_id).remove();
 }
 
 $(function() {
@@ -242,6 +262,10 @@ input.error {
 background:#ff7e7e;
 color:#FFF;
 }
+
+#choices {
+display:none;
+}
 	</style>
 {% endblock %}
 {% block coltype %}colMS{% endblock %}
@@ -261,6 +285,9 @@ Boxes with red border must be filled out<br/>
 
 </select><span id="is_app_installed"></span><br/>
 <strong>Model name:</strong> <input type="text" name="name" class="required" /><br/>
+<table id="choices">
+<tr><th style="width:25px;"></th><th>Value</th><th>Label</th></tr>
+</table>
 <table id="fields">
 <th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Null</th><th>Blank</th><th>Default</th><th></th></tr></table>
 <div id="add_field_buttons">

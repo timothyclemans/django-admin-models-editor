@@ -19,11 +19,24 @@ def get_field_id(key):
     stop = indexes_of_seperator[1]
     return key[start: stop]
     
+def get_choices_id(key):
+    print key
+    indexes_of_seperator = findall(key, '_')
+    print list(findall(key, '_'))
+    start = indexes_of_seperator[0] + 1
+    stop = indexes_of_seperator[1]
+    return key[start: stop]
+    
 def get_number_of_fields(post_dict):
     return len(set([get_field_id(i) for i in post_dict.keys() if i.startswith('field_')]))
 
 def get_field_ids(post_dict):    
     return sorted(set([get_field_id(i) for i in post_dict.keys() if i.startswith('field_')]))
+def get_choices_ids(post_dict):    
+    return sorted(set([get_choices_id(i) for i in post_dict.keys() if i.startswith('choices_')]))
+def get_choice_ids(choices_id, post_dict):    
+    return sorted(set([get_choices_id(i) for i in post_dict.keys() if i.startswith('choices_%s_choice' % choices_id)]))
+
 field_class_names = {'auto': 'AutoField', 'biginteger': 'BigIntegerField', 'boolean': 'BooleanField', 'char': 'CharField', 'commaseparatedinteger': 'CommaSeparatedIntegerField', 'foreignkey': 'ForeignKey', 'onetoone': 'OneToOneField', 'manytomany': 'ManyToManyField', 'text': 'TextField', 'time': 'TimeField'} 
     
 
@@ -118,7 +131,21 @@ def create_model(request):
     #response = 'hello' + 'number of fields: %s' % (get_number_of_fields(request.POST))
     #response += str([list(findall(i, '_')) for i in request.POST.keys() if '_' in i])
     #response += str([(get_field_id(i[0]), i[1]) for i in request.POST.keys() if i.startswith('field_')])
-    code = "class %s(models.Model):\n" % (request.POST['name'].capitalize()) 
+    code = ''
+    code += str(request.POST) + '\n\n\n'
+    code += "class %s(models.Model):\n" % (request.POST['name'].capitalize()) 
+    for choices_id in get_choices_ids(request.POST):
+        if 'choices_%s_name' % (choices_id) in request.POST:
+            code += '    %s = (\n' % (request.POST['choices_%s_name' % (choices_id)])
+            for choice_id in get_choice_ids(choices_id, request.POST):
+                code += '        ('
+                if 'choices_%s_choice_%s_value' % (choices_id, choice_id) in request.POST:
+                    code += "'%s'" % (request.POST['choices_%s_choice_%s_value' % (choices_id, choice_id)])
+                code += ', '
+                if 'choices_%s_choice_%s_label' % (choices_id, choice_id) in request.POST:
+                    code += "'%s'" % (request.POST['choices_%s_choice_%s_label' % (choices_id, choice_id)])
+                code += '),\n'
+            code += '    )\n'
     is_name_field = False
     for field_id in get_field_ids(request.POST):
         field = get_field_dict(field_id, request.POST)
@@ -154,6 +181,11 @@ def create_model(request):
                 related_model = field['related_model'].strip("'")
                 related_model = related_model.strip('"')
                 arguments.append("'%s'" % (related_model))
+            if field['type'] == 'ManyToMany':
+                if 'through' in field:
+                    through = field['through'].strip("'")
+                    through = through.strip('"')
+                    arguments.append("through='%s'" % (through))
         for i in ['unique', 'null', 'blank', 'auto_now', 'auto_now_add']:
             if i in field:
                 arguments.append("%s=True" % (i))
@@ -193,4 +225,4 @@ def create_model(request):
            f = open(request.POST['file_path'], 'w')
            f.write('from django.db import models\n\n' + code)
            f.close()
-    return HttpResponse(code, content_type='text')
+    return HttpResponse(code, content_type='text/plain')
