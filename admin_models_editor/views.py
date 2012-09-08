@@ -62,7 +62,19 @@ def create_model(request):
         settings_file = f.read()
         f.close()
         logging.info("=====================\n%s" % (settings_file))
-        apps = [(dirname.strip('./'), os.path.join(os.path.join(os.getcwd(), dirname.strip('./')), "models.py"), dirname.strip('./') in settings_file) for dirname, dirnames, filenames in os.walk('.') if 'views.py' in os.listdir(dirname) or 'urls.py' in os.listdir(dirname)]
+        f = open(settings_path, 'r')
+        settings_lines = f.readlines()
+        f.close()
+        for i, line in enumerate(settings_lines):
+             if line.startswith('INSTALLED_APPS = ('):
+                 start = i
+                 break
+        for i, line in enumerate(settings_lines[start:]):
+             if line.startswith(')'):
+                 stop = start + i
+                 break
+        installed_apps = '\n'.join(settings_lines[start:stop])
+        apps = [(dirname.strip('./'), os.path.join(os.path.join(os.getcwd(), dirname.strip('./')), "models.py"), dirname.strip('./') in installed_apps) for dirname, dirnames, filenames in os.walk('.') if 'views.py' in os.listdir(dirname) or 'urls.py' in os.listdir(dirname)]
         response_data = {'apps': apps}
         
         return HttpResponse(json.dumps(response_data), mimetype="application/json")
