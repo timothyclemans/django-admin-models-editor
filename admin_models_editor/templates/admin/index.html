@@ -5,7 +5,7 @@
 {% block extrahead %}
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
     <script type="text/javascript">
-
+var apps = [];
 var id = 0;
 
 function createModel() {
@@ -27,10 +27,16 @@ function saveModel() {
 function listApps() {
 	$.get('/admin/create_model/', 'list_apps=true',function(response){
 	  $('#apps').html('');
+	  apps = response.apps;
 	  for(var i=0; i<response.apps.length; i++) {
-	    $('#apps').append('<option value="'+response.apps[i][1]+'">'+response.apps[i][0]+'</option>') ;
+	    $('#apps').append('<option id="'+i+'" value="'+response.apps[i][1]+'">'+response.apps[i][0]+'</option>') ;
 	  }
 	   $('#file_path').val(response.apps[0][1]);
+	   if (!apps[0][2]) {
+	     
+	     $('#is_app_installed').html('This app is not installed. <input type="button" value="Install this app" onclick="installApp(\''+apps[0][0]+'\');" />');
+		 alert($('#is_app_installed').html());
+	   }
 	});
 }
 
@@ -41,6 +47,14 @@ function syncdb() {
 	      $('#error').text('Syncdb failed');
       }
 	  $('#cmd_output').text(response.cmd_output);
+	});
+}
+
+function installApp(app) {
+    alert('install app');
+	$.get('/admin/create_model/', 'install_app='+app,function(response){
+	  alert('ia2');
+	  $('#is_app_installed').html('');
 	});
 }
 
@@ -96,13 +110,20 @@ $(function() {
 		$('#hide_model_editor').hide();
 	});
 	    $("#apps").change(function () {
+		  $('#is_app_installed').html('');
           var str = "";
+		  var id = false;
           $("select option:selected").each(function () {
                 str += $(this).val() + " ";
+				id = parseInt($(this).attr('id'));
               });
           $("#file_path").val(str);
+		  if (!apps[id][2]) {
+	     $('#is_app_installed').html('This app is not installed. <input type="button" value="Install this app" onclick="installApp(\''+apps[id][0]+'\');" />');
+	   }
         })
         .trigger('change');
+		
 });
     </script>
 	<style>
@@ -149,7 +170,7 @@ display:none;
 {% csrf_token %}
 <strong>App:</strong> <select id="apps">
 
-</select><br/>
+</select><span id="is_app_installed"></span><br/>
 <strong>Model name:</strong> <input type="text" name="name" /><br/>
 <table id="fields">
 <th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Null</th><th>Blank</th><th></th></tr></table>

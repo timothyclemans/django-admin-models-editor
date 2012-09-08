@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 import os
 import json
+import logging
 
 def findall(L, value, start=0):
     return [i for i, x in enumerate(L) if x == value][start:]
@@ -49,8 +50,50 @@ def create_model(request):
         
         return HttpResponse(os.path.join(os.getcwd(), "models.py"))
     if 'list_apps' in request.GET:
-        apps = [(dirname.strip('./'), os.path.join(os.path.join(os.getcwd(), dirname.strip('./')), "models.py")) for dirname, dirnames, filenames in os.walk('.') if 'views.py' in os.listdir(dirname) or 'urls.py' in os.listdir(dirname)]
+        settings_file = ''
+        settings_path = ''
+        if 'settings.py' in os.listdir('.'):
+            settings_path = 'settings.py'
+        else:
+            for dir in [i for i in os.listdir('.') if os.path.isdir(i)]:
+                if 'settings.py' in os.listdir(dir):
+                    settings_path = os.path.join(dir, 'settings.py')
+        f = open(os.path.join(os.getcwd(), settings_path), 'r')
+        settings_file = f.read()
+        f.close()
+        logging.info("=====================\n%s" % (settings_file))
+        apps = [(dirname.strip('./'), os.path.join(os.path.join(os.getcwd(), dirname.strip('./')), "models.py"), dirname.strip('./') in settings_file) for dirname, dirnames, filenames in os.walk('.') if 'views.py' in os.listdir(dirname) or 'urls.py' in os.listdir(dirname)]
         response_data = {'apps': apps}
+        
+        return HttpResponse(json.dumps(response_data), mimetype="application/json")
+    
+    if 'install_app' in request.GET:
+        # add app to settings.py
+        settings_path = ''
+        if 'settings.py' in os.listdir('.'):
+            settings_path = 'settings.py'
+        else:
+            for dir in [i for i in os.listdir('.') if os.path.isdir(i)]:
+                if 'settings.py' in os.listdir(dir):
+                    settings_path = os.path.join(dir, 'settings.py')
+        f = open(settings_path, 'r')
+        settings_lines = f.readlines()
+        f.close()
+        for i, line in enumerate(settings_lines):
+             if line.startswith('INSTALLED_APPS = ('):
+                 start = i
+                 break
+        for i, line in enumerate(settings_lines[start:]):
+             if line.startswith(')'):
+                 stop = start + i
+                 break
+        new_app = "    '%s',\n" % (request.GET['install_app'])
+        settings_lines.insert(stop, new_app)
+        new_settings = ''.join(settings_lines)
+        f = open(settings_path, 'w')
+        f.write(new_settings)
+        f.close()
+        response_data = {'success': 'true'}
         
         return HttpResponse(json.dumps(response_data), mimetype="application/json")
         
