@@ -4,7 +4,7 @@ Overview
 This app aims to let admins create and edit models within the admin interface.
 It is not ready for production use.
 
-![Creating a model called People](screenshot.png "Creating a model called People")
+.. image:: screenshot.png
 
 Install
 =======
