@@ -23,6 +23,9 @@ to settings.py and add ``import os`` and ``BASE_DIR = os.getcwd()`` to settings.
 
 6. Add ``url(r'^admin/create_model/', 'admin_models_editor.views.create_model'),`` to urls.py
 
+To enable simple mode, replaces Null & Blank checkboxes with one Required checkbox, add
+``ADMIN_MODELS_EDITOR_SIMPLE_MODE = True`` to ``settings.py``
+
 Author
 ======
 
@@ -31,6 +34,6 @@ Timothy Clemans <timothy.clemans@gmail.com>
 To do
 =====
 
-* Support choices option
+* Update the form based on changes to the code
 * Make models editable
 * Make a graphical interface, see http://gaesql.appspot.com/ and http://code.google.com/p/uml-to-django/
