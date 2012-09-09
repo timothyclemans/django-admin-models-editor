@@ -1,5 +1,7 @@
 # Django settings for sample_project project.
 
+ADMIN_MODELS_EDITOR_SIMPLE_MODE = True # Enable to replace Null & Blank checkboxes with one Required checkbox
+
 import os
 BASE_DIR = os.getcwd()
 DEBUG = True

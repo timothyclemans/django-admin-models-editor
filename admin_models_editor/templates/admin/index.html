@@ -5,10 +5,12 @@
 {% block extrahead %}
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
     <script type="text/javascript">
-var apps = [];
+	var apps = [];
 var id = 0;
 var choices_id = 0;
-var choices_choice_ids = [];
+var choices_choice_ids = {};
+
+
 function createModel() {
 	var content = $("#create_model_form").serialize();
 
@@ -28,7 +30,7 @@ function saveModel() {
 function listApps() {
 	$.get('/admin/create_model/', 'list_apps=true',function(response){
 	  $('#apps').html('');
-	  apps = response.apps;
+	  apps.concat(response.apps);
 	  for(var i=0; i<response.apps.length; i++) {
 	    $('#apps').append('<option id="'+i+'" value="'+response.apps[i][1]+'">'+response.apps[i][0]+'</option>') ;
 	  }
@@ -97,12 +99,18 @@ function getDefaultName(fieldType) {
 
 function addField(fieldType) {
     var html = '<tr id="field_'+id+'"><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="hidden" name="field_'+id+'_type" value="'+fieldType+'"><input class="required" name="field_'+id+'_name" type="text" value="'+getDefaultName(fieldType)+'" style="width:100px;" /></td><td>'+fieldType+'</td><td><input type="checkbox"  name="field_'+id+'_unique" /></td>';
-    if (fieldType != 'Char' && fieldType != 'Boolean' && fieldType != 'NullBoolean') {
-	    html += '<td><input type="checkbox" name="field_'+id+'_null" /> </td>';
+
+    if (simple_mode) {
+	    html += '<td><input type="checkbox" checked name="field_'+id+'_required" /> </td>'
 	} else {
-	    html += '<td></td>';
-    }
-	html += '<td><input type="checkbox" name="field_'+id+'_blank" /> </td>'
+		if (fieldType != 'Char' && fieldType != 'Boolean' && fieldType != 'NullBoolean') {
+			html += '<td><input type="checkbox" name="field_'+id+'_null" /> </td>';
+		} else {
+			html += '<td></td>';
+		}
+		html += '<td><input type="checkbox" name="field_'+id+'_blank" /> </td>'
+	}
+	
 	if ((fieldType == 'Boolean') || (fieldType == 'NullBoolean')) {
 	    html += '<td><input type="radio" name="field_'+id+'_default" value="no_default" checked> No default<br/><input type="radio" name="field_'+id+'_default" value="true"> True<br/><input type="radio" name="field_'+id+'_default" value="false"> False</td>'
 	} else {
@@ -111,7 +119,7 @@ function addField(fieldType) {
 		
 	switch (fieldType) {
 	    case 'Char':
-		    html += '<td> <table><tr><th>Max length:</th><td><input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td></tr><tr><th>Choices:</th><td><input type="button" value="Add choices" onclick="addChoices();" /><div id="choices_radio_buttons_field_'+id+'"><input type="radio" name="field_'+id+'_choices" value="no_choices"> No choices</div></td></tr></table></td>';
+		    html += '<td> <table><tr><th>Max length:</th><td><input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td></tr><tr><th>Choices:</th><td><input type="button" value="Add choices" onclick="addChoices();" /><div id="choices_radio_buttons_field_'+id+'"><input type="radio" name="field_'+id+'_choices" value="no_choices" checked> No choices</div></td></tr></table></td>';
 			break;
 		case 'CommaSeparatedInteger':
 		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td>';
@@ -175,7 +183,6 @@ function addChoices() {
     $('#choices').show().append('<tr class="choices_'+choices_id+'" id="choices_'+choices_id+'" style="background:#ccc;"><th><input type="button" value="X" onclick="removeChoices('+choices_id+')"/></th><th colspan="2">Choices name: <input type="text" value="_CHOICES" name="choices_'+choices_id+'_name" ><input type="button" value="Add choice" onclick="addChoice('+choices_id+')"/></th></tr>');
     addChoice(choices_id);
 	choices_choice_ids.push(0);
-	// alert(choices_choice_ids);
 	choices_id += 1;
 	
 }
@@ -185,6 +192,16 @@ function removeChoices(target_id) {
 }
 
 $(function() {
+    $.get('/admin/create_model/', 'is_simple_mode=True',function(response){
+	    if (response.is_simple_mode) {
+		    window.simple_mode = true; 
+		    $('#fields').html('<tr><th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Required</th><th>Default</th><th></th></tr>');
+	    } else {
+		    window.simple_mode = false;
+		    $('#fields').html('<tr><th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Null</th><th>Blank</th><th>Default</th><th></th></tr>');
+
+		}
+	});
     var generate_code_interval = setInterval( createModel, 1000);
 	listApps();
 	$('#add_field_buttons input').click(function() {
@@ -203,13 +220,14 @@ $(function() {
 	    $("#apps").change(function () {
 		  $('#is_app_installed').html('');
           var str = "";
-		  var id = false;
+		  var aid = false;
           $("select option:selected").each(function () {
                 str += $(this).val() + " ";
-				id = parseInt($(this).attr('id'));
+				aid = parseInt($(this).attr('id'));
               });
           $("#file_path").val(str);
-		  if (!apps[id][2]) {
+		  
+		  if (!apps[aid][2]) {
 	     $('#is_app_installed').html('This app is not installed. <input type="button" value="Install this app" onclick="installApp(\''+apps[id][0]+'\');" />');
 	   }
         })
@@ -289,7 +307,7 @@ Boxes with red border must be filled out<br/>
 <tr><th style="width:25px;"></th><th>Value</th><th>Label</th></tr>
 </table>
 <table id="fields">
-<th style="width:10px;"></th><th style="width:100px;">Name</th><th style="width:50px;">Type</th><th style="width:25px;">Unique</th><th>Null</th><th>Blank</th><th>Default</th><th></th></tr></table>
+</table>
 <div id="add_field_buttons">
 <strong>Add field:</strong> 
 

@@ -3,6 +3,13 @@ import os
 import json
 import logging
 
+is_simple_mode = False
+try:
+    from django.conf import settings
+    is_simple_mode = settings.ADMIN_MODELS_EDITOR_SIMPLE_MODE
+except:
+    pass
+
 def is_one_of(items, target):
     for item in items:
         if item == target:
@@ -54,6 +61,10 @@ def get_field_class(field_type):
         return field_type + 'Field'
     
 def create_model(request):
+    if 'is_simple_mode' in request.GET:
+        response_data = {'is_simple_mode': is_simple_mode}
+        
+        return HttpResponse(json.dumps(response_data), mimetype="application/json")
     if 'syncdb' in request.GET:
         cmd_output = ''
         try:
@@ -67,7 +78,7 @@ def create_model(request):
     if 'get_file_path' in request.GET:
 
         
-        return HttpResponse(os.path.join(os.getcwd(), "models.py"))
+        return HttpResponse(os.path.join(os.getcwd(), "models.py"), mimetype="text/plain")
     if 'list_apps' in request.GET:
         settings_file = ''
         settings_path = ''
@@ -132,7 +143,7 @@ def create_model(request):
     #response += str([list(findall(i, '_')) for i in request.POST.keys() if '_' in i])
     #response += str([(get_field_id(i[0]), i[1]) for i in request.POST.keys() if i.startswith('field_')])
     code = ''
-    code += str(request.POST) + '\n\n\n'
+    #code += str(request.POST) + '\n\n\n'
     code += "class %s(models.Model):\n" % (request.POST['name'].capitalize()) 
     for choices_id in get_choices_ids(request.POST):
         if 'choices_%s_name' % (choices_id) in request.POST:
@@ -189,6 +200,10 @@ def create_model(request):
         for i in ['unique', 'null', 'blank', 'auto_now', 'auto_now_add']:
             if i in field:
                 arguments.append("%s=True" % (i))
+        if not 'required' in field:
+            if not field['type'] == 'Char':
+                arguments.append("null=True")
+            arguments.append("blank=True")
         if 'default' in field:
             if field['default']:
                 if is_one_of(['Char', 'Text'], field['type']):
