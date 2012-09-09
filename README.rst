@@ -3,8 +3,8 @@ Overview
 
 This lets you create models within the admin interface.
 
-.. image:: https://raw.github.com/timothyclemans/django-admin-models-editor/master/screenshot_of_adding_choices.png
 .. image:: https://raw.github.com/timothyclemans/django-admin-models-editor/master/screenshot.png
+.. image:: https://raw.github.com/timothyclemans/django-admin-models-editor/master/screenshot_of_adding_choices.png
 
 Install
 =======

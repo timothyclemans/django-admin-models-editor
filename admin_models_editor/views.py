@@ -156,6 +156,12 @@ def create_model(request):
     model_name = ''
     request.POST['name'].capitalize()
     code_from_input = request.POST['code'].split('\n')[0]
+    def_lines = ''
+    if '    def' in request.POST['code']:
+        for i, line in enumerate(request.POST['code'].split('\n')):
+            if line.startswith('    def'):
+                def_lines = '\n'.join(request.POST['code'].split('\n')[i:])
+                break
     last_code_from_input = request.POST['last_code'].split('\n')[0]
     # check if model name in source changed
     model_name_in_last_source = ''
@@ -251,13 +257,16 @@ def create_model(request):
             if not field['choices'] == 'no_choices':
                 arguments.append("choices=%s" % (field['choices']))
         code += "    %s = models.%s(%s)\n" % (field['name'], get_field_class(field['type']), ', '.join(arguments))
-    if is_name_field:
-        code += """
+    if def_lines:
+        code += '\n' + def_lines
+    else:
+        if is_name_field:
+            code += """
     def __unicode__(self):
         return '%s' % (self.name)
 """
-    else:
-        code += """
+        else:
+            code += """
     def __unicode__(self):
         return ''
 """
