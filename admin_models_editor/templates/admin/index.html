@@ -8,8 +8,12 @@
 	var apps = [];
 var id = 0;
 var choices_id = 0;
-var choices_choice_ids = {};
-
+var choices_choice_ids = [];
+var char_field_ids = [];
+var selected_choices = [];
+function showDebug() {
+    $('#debug').html('char field ids: ' + char_field_ids + '<br/>selected choices ids: ' + char_field_ids);
+}
 
 function createModel() {
 	var content = $("#create_model_form").serialize();
@@ -119,7 +123,9 @@ function addField(fieldType) {
 		
 	switch (fieldType) {
 	    case 'Char':
-		    html += '<td> <table><tr><th>Max length:</th><td><input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td></tr><tr><th>Choices:</th><td><input type="button" value="Add choices" onclick="addChoices();" /><div id="choices_radio_buttons_field_'+id+'"><input type="radio" name="field_'+id+'_choices" value="no_choices" checked> No choices</div></td></tr></table></td>';
+		    html += '<td> <table><tr><th>Max length:</th><td><input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td></tr><tr><th>Choices:</th><td><input type="button" value="Add choices" onclick="addChoices();" /><div id="choices_radio_buttons_field_'+id+'" class="choices_box"></div></td></tr></table></td>';
+            char_field_ids.push(id);
+			selected_choices[id] = false;
 			break;
 		case 'CommaSeparatedInteger':
 		    html += '<td> <strong>Max length:</strong> <input name="field_'+id+'_max_length" type="text" value="30"  style="width:20px;" class="required" /></td>';
@@ -175,20 +181,42 @@ function getFilePath() {
 
 function addChoice(target_choices_id) {
     element = $('#choices_'+target_choices_id)
-    element.after('<tr><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="text" name="choices_'+target_choices_id+'_choice_'+choices_choice_ids[target_choices_id]+'_value" style="width:200px;" /></td><td><input type="text" style="width:200px;" name="choices_'+target_choices_id+'_choice_'+choices_choice_ids[target_choices_id]+'_label"/></td></tr>');
-    choices_choice_ids[target_choices_id] += 0;
+    element.after('<tr id="choices_'+target_choices_id+'_choice_'+choices_choice_ids[target_choices_id]+'" class="choices_'+target_choices_id+'"><td><input type="button" value="X" onclick="removeChoice('+target_choices_id+', '+choices_choice_ids[target_choices_id]+')"/></td><td><input type="text" name="choices_'+target_choices_id+'_choice_'+choices_choice_ids[target_choices_id]+'_value" style="width:200px;" /></td><td><input type="text" style="width:200px;" name="choices_'+target_choices_id+'_choice_'+choices_choice_ids[target_choices_id]+'_label"/></td></tr>');
+    window.choices_choice_ids[target_choices_id] = window.choices_choice_ids[target_choices_id] + 1;
 }
 
 function addChoices() {
-    $('#choices').show().append('<tr class="choices_'+choices_id+'" id="choices_'+choices_id+'" style="background:#ccc;"><th><input type="button" value="X" onclick="removeChoices('+choices_id+')"/></th><th colspan="2">Choices name: <input type="text" value="_CHOICES" name="choices_'+choices_id+'_name" ><input type="button" value="Add choice" onclick="addChoice('+choices_id+')"/></th></tr>');
-    addChoice(choices_id);
-	choices_choice_ids.push(0);
-	choices_id += 1;
+    $('#choices').show().append('<tr class="choices_'+choices_id+'" id="choices_'+choices_id+'" style="background:#ccc;"><th><input type="button" value="X" onclick="removeChoice('+choices_id+')"/></th><th colspan="2">Choices name: <input type="text" value="_CHOICES" id="choices_'+choices_id+'_name" name="choices_'+choices_id+'_name" ><input type="button" value="Add choice" onclick="addChoice('+choices_id+')"/></th></tr>');
+	window.choices_choice_ids[choices_id] = 0; 
+	addChoice(choices_id);
+
+	window.choices_id += 1;
 	
+}
+
+
+function listChoicesForField(element, index, array) {
+    $('#choices_radio_buttons_field_'+element).html('<input type="radio" char_field_id="'+element+'" name="field_'+element+'_choices" value="no_choices" checked class="choices_radio" /> No choices<br/>');
+    for(i=0; i<choices_id; i++) {
+	    var label = $('#choices_'+i+'_name').val();
+		var checked = '';
+		if (selected_choices[element] == i) {
+		    checked = 'checked';
+		}
+	    $('#choices_radio_buttons_field_'+element).append('<input type="radio" char_field_id="'+element+'" choices_id="'+i+'" name="field_'+element+'_choices" value="'+label+'" class="choices_radio" '+checked+'/> '+label + '<br/>');
+    }
+}
+
+function listChoices() {
+    char_field_ids.forEach(listChoicesForField);
 }
 
 function removeChoices(target_id) {
     $('.choices_'+target_id).remove();
+}
+
+function removeChoice(target_choices_id, target_choice_id) {
+    $('#choices_'+target_choices_id+'_choice_'+target_choice_id).remove();
 }
 
 $(function() {
@@ -202,7 +230,16 @@ $(function() {
 
 		}
 	});
+	$(".choices_box input:radio").live('click', function() {
+	    if ($(this).val() == 'no_choices') {
+		    char_field_ids[parseInt($(this).attr('char_field_id'))] = false;
+		} else { 
+	        char_field_ids[parseInt($(this).attr('char_field_id'))] = parseInt($(this).attr('choices_id'));
+		}
+	});
     var generate_code_interval = setInterval( createModel, 1000);
+	var debug_interval = setInterval( showDebug, 1000);
+	var list_choices_interval = setInterval( listChoices, 500);
 	listApps();
 	$('#add_field_buttons input').click(function() {
 	    addField($(this).val());
@@ -298,6 +335,9 @@ display:none;
 <div id="model_editor">
 <form action="/create_model/" class="module" method="post" id="create_model_form">
 {% csrf_token %}
+<div id="debug">
+
+</div>
 Boxes with red border must be filled out<br/>
 <strong>App:</strong> <select id="apps" class="required">
 

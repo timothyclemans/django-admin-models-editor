@@ -37,12 +37,20 @@ def get_choices_id(key):
 def get_number_of_fields(post_dict):
     return len(set([get_field_id(i) for i in post_dict.keys() if i.startswith('field_')]))
 
+def get_choice_id(key):
+    print key
+    indexes_of_seperator = findall(key, '_')
+    print list(findall(key, '_'))
+    start = indexes_of_seperator[2] + 1
+    stop = indexes_of_seperator[3]
+    return key[start: stop]    
+    
 def get_field_ids(post_dict):    
     return sorted(set([get_field_id(i) for i in post_dict.keys() if i.startswith('field_')]))
 def get_choices_ids(post_dict):    
     return sorted(set([get_choices_id(i) for i in post_dict.keys() if i.startswith('choices_')]))
 def get_choice_ids(choices_id, post_dict):    
-    return sorted(set([get_choices_id(i) for i in post_dict.keys() if i.startswith('choices_%s_choice' % choices_id)]))
+    return sorted(set([get_choice_id(i) for i in post_dict.keys() if i.startswith('choices_%s_choice' % choices_id)]))
 
 field_class_names = {'auto': 'AutoField', 'biginteger': 'BigIntegerField', 'boolean': 'BooleanField', 'char': 'CharField', 'commaseparatedinteger': 'CommaSeparatedIntegerField', 'foreignkey': 'ForeignKey', 'onetoone': 'OneToOneField', 'manytomany': 'ManyToManyField', 'text': 'TextField', 'time': 'TimeField'} 
     
@@ -215,6 +223,9 @@ def create_model(request):
                         arguments.append("default=False")
                 else:
                     arguments.append("default=%s" % (field['default']))
+        if 'choices' in field:
+            if not field['choices'] == 'no_choices':
+                arguments.append("choices=%s" % (field['choices']))
         code += "    %s = models.%s(%s)\n" % (field['name'], get_field_class(field['type']), ', '.join(arguments))
     if is_name_field:
         code += """
