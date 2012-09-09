@@ -152,7 +152,31 @@ def create_model(request):
     #response += str([(get_field_id(i[0]), i[1]) for i in request.POST.keys() if i.startswith('field_')])
     code = ''
     #code += str(request.POST) + '\n\n\n'
-    code += "class %s(models.Model):\n" % (request.POST['name'].capitalize()) 
+    import re
+    model_name = ''
+    request.POST['name'].capitalize()
+    code_from_input = request.POST['code'].split('\n')[0]
+    last_code_from_input = request.POST['last_code'].split('\n')[0]
+    # check if model name in source changed
+    model_name_in_last_source = ''
+    model_name_in_code = ''
+    if last_code_from_input.startswith('class'):
+        m = re.match(r"class (\w+)\(models.Model\):", last_code_from_input)
+        try:
+            model_name_in_last_source = m.group(1)
+        except:
+            pass
+    if code_from_input.startswith('class'):
+        m = re.match(r"class (\w+)\(models.Model\):", code_from_input)
+        try:
+            model_name_in_code = m.group(1)
+        except:
+            pass
+    if model_name_in_last_source != model_name_in_code:
+        model_name = model_name_in_code
+    else:
+        model_name = request.POST['name']
+    code += "class %s(models.Model):\n" % (model_name) 
     for choices_id in get_choices_ids(request.POST):
         if 'choices_%s_name' % (choices_id) in request.POST:
             code += '    %s = (\n' % (request.POST['choices_%s_name' % (choices_id)])
@@ -241,14 +265,18 @@ def create_model(request):
     #response += str(request.POST.items())
     if 'save' in request.POST:
         try:
-           f = open(request.POST['file_path'], 'r')
-           file = f.read()
-           f.close()
-           f = open(request.POST['file_path'], 'w')
-           f.write(file + '\n' + code)
-           f.close()
+            f = open(request.POST['file_path'], 'r')
+            file = f.read()
+            f.close()
+            f = open(request.POST['file_path'], 'w')
+            f.write(file + '\n' + code)
+            f.close()
         except IOError as e:
-           f = open(request.POST['file_path'], 'w')
-           f.write('from django.db import models\n\n' + code)
-           f.close()
-    return HttpResponse(code, content_type='text/plain')
+            f = open(request.POST['file_path'], 'w')
+            f.write('from django.db import models\n\n' + code)
+            f.close()
+    
+    
+    response_data = {'code': code, 'model_name': model_name}
+        
+    return HttpResponse(json.dumps(response_data), mimetype="application/json")    

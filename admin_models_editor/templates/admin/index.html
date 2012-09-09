@@ -11,6 +11,7 @@ var choices_id = 0;
 var choices_choice_ids = [];
 var char_field_ids = [];
 var selected_choices = [];
+var char_default = true;
 function showDebug() {
     $('#debug').html('char field ids: ' + char_field_ids + '<br/>selected choices ids: ' + char_field_ids);
 }
@@ -19,13 +20,14 @@ function createModel() {
 	var content = $("#create_model_form").serialize();
 
 	$.post('/admin/create_model/', content,function(response){
-	  $('#code').val(response);
+	  $('#code').val(response.code);
+	  $('#model_name').val(response.model_name);
 	});
 }
 
 function saveModel() {
 	var content = 'save=True&'+$("#create_model_form").serialize();
-
+    $('#last_code').val($('#code').val());
 	$.post('/admin/create_model/', content,function(response){
 	  $('#code').val(response);
 	});
@@ -73,6 +75,14 @@ function getDefaultName(fieldType) {
     switch (fieldType) {
 	    case 'Boolean':
 		    return 'is_';
+			break;
+		case 'Char':
+		    if (char_default) {
+			    char_default = false;
+			    return 'name';
+		    } else {
+			    return '';
+			}
 			break;
 	    case 'Date':
 		    return 'date';
@@ -171,6 +181,7 @@ function addField(fieldType) {
     $('#fields').append(html);
 	id += 1;
 	$('#fields').show();
+	createModel();
 }
 
 function getFilePath() {
@@ -220,6 +231,7 @@ function removeChoice(target_choices_id, target_choice_id) {
 }
 
 $(function() {
+    createModel();
     $.get('/admin/create_model/', 'is_simple_mode=True',function(response){
 	    if (response.is_simple_mode) {
 		    window.simple_mode = true; 
@@ -231,13 +243,28 @@ $(function() {
 		}
 	});
 	$(".choices_box input:radio").live('click', function() {
+	    createModel();
 	    if ($(this).val() == 'no_choices') {
 		    char_field_ids[parseInt($(this).attr('char_field_id'))] = false;
 		} else { 
 	        char_field_ids[parseInt($(this).attr('char_field_id'))] = parseInt($(this).attr('choices_id'));
 		}
 	});
-    var generate_code_interval = setInterval( createModel, 1000);
+    //var generate_code_interval = setInterval( createModel, 1000);
+	$('input:checkbox').live('click', function() {
+	    createModel();
+	});
+	$('input').live('focusout', function() {
+	    createModel();
+		$('#note_about_code_updating').toggle();
+	});
+	$('input').live('focusin', function() {
+	    createModel();
+		$('#note_about_code_updating').toggle();
+	});
+	$('textarea').focusout(function() {
+	    createModel();
+	});
 	var debug_interval = setInterval( showDebug, 1000);
 	var list_choices_interval = setInterval( listChoices, 500);
 	listApps();
@@ -325,6 +352,10 @@ display:none;
 #debug {
 display:none;
 }
+
+#note_about_code_updating {
+display:none;
+}
 	</style>
 {% endblock %}
 {% block coltype %}colMS{% endblock %}
@@ -343,10 +374,11 @@ display:none;
 
 </div>
 Boxes with red border must be filled out<br/>
+<p id="note_about_code_updating">Your code will update when you unfocus the input box.</p>
 <strong>App:</strong> <select id="apps" class="required">
 
 </select><span id="is_app_installed"></span><br/>
-<strong>Model name:</strong> <input type="text" name="name" class="required" /><br/>
+<strong>Model name:</strong> <input type="text" id="model_name" name="name" class="required" /><br/>
 <table id="choices">
 <tr><th style="width:25px;"></th><th>Value</th><th>Label</th></tr>
 </table>
@@ -391,8 +423,10 @@ Boxes with red border must be filled out<br/>
 <input type="button" value="Syncdb" onclick="syncdb();" />
 <div id="error"></div>
 <pre id="cmd_output"></pre>
+<input type="hidden" id="last_code" name="last_code" value="" />
+<textarea id="code" name="code"></textarea>
 </form>
-<textarea id="code"></textarea>
+
 </div>
 {% endblock %}
 
