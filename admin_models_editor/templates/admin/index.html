@@ -19,10 +19,14 @@ function showDebug() {
 function createModel() {
 	var content = $("#create_model_form").serialize();
 
+	$('#last_code').val($('#code').val());
 	$.post('/admin/create_model/', content,function(response){
 	  $('#code').val(response.code);
 	  $('#model_name').val(response.model_name);
-	  alert(response.post_dict);
+	  //alert(response.post_dict);
+	  for (var i = 0; i < response.new_field_names.length; i++) {
+	      $('#'+response.new_field_names[i][0]).val(response.new_field_names[i][1]);
+	  }
 	});
 }
 

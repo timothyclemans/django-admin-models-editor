@@ -73,6 +73,7 @@ def get_field_class(field_type):
         return field_type + 'Field'
     
 def create_model(request):
+    request.POST = request.POST.copy()
     if 'is_simple_mode' in request.GET:
         response_data = {'is_simple_mode': is_simple_mode}
         
@@ -186,6 +187,23 @@ def create_model(request):
         model_name = model_name_in_code
     else:
         model_name = request.POST['name']
+    
+    # grab names of fields if names in code changed
+    old_code = request.POST['last_code']
+    new_code = request.POST['code']
+    new_field_names = []
+    if old_code != new_code:
+        field_lines = [line for line in new_code.split('\n') if 'models.' in line and not 'models.Model' in line]
+        for i, line in enumerate(field_lines):
+            #m = re.match(r"    (\w[_]+) = models.(\w+)\((^[\(\)])\)", last_code_from_input)
+            #if m:
+            if line.startswith('    ') and ' =' in line: 
+                start = 4
+                stop = line.index(' =')
+                new_field_names.append(('field_%s_name' % i, line[start: stop]))
+                request.POST['field_%s_name' % i] = line[start: stop]                
+                #new_field_names.append('field_%s_name' % i, m.group(1))
+                #request.POST['field_%s_name' % i] = m.group(1)
     code += "class %s(models.Model):\n" % (model_name) 
     for choices_id in get_choices_ids(request.POST):
         if 'choices_%s_name' % (choices_id) in request.POST:
@@ -299,6 +317,6 @@ def create_model(request):
             f.close()
     
     
-    response_data = {'post_dict': str(request.POST), 'code': code, 'model_name': model_name}
+    response_data = {'post_dict': str(request.POST), 'new_field_names': new_field_names, 'code': code, 'model_name': model_name}
         
     return HttpResponse(json.dumps(response_data), mimetype="application/json")    
