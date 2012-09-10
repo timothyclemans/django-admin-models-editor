@@ -22,6 +22,7 @@ function createModel() {
 	$.post('/admin/create_model/', content,function(response){
 	  $('#code').val(response.code);
 	  $('#model_name').val(response.model_name);
+	  alert(response.post_dict);
 	});
 }
 
@@ -111,8 +112,17 @@ function getDefaultName(fieldType) {
 	}
 }
 
+function updateFieldNames() {
+    for (var i = 0; i < id; i++) {
+	    if ($('#field_'+i+'_name').val() != '') {
+			$('#ordering_'+i).text($('#field_'+i+'_name').val());
+			$('#ordered_field_'+i+' span').text($('#field_'+i+'_name').val());
+		}
+	}
+}
+
 function addField(fieldType) {
-    var html = '<tr id="field_'+id+'"><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="hidden" name="field_'+id+'_type" value="'+fieldType+'"><input class="required" name="field_'+id+'_name" type="text" value="'+getDefaultName(fieldType)+'" style="width:100px;" /></td><td>'+fieldType+'</td><td><input type="checkbox"  name="field_'+id+'_unique" /></td>';
+    var html = '<tr id="field_'+id+'"><td><input type="button" value="X" onclick="removeField('+id+')"/></td><td><input type="hidden" name="field_'+id+'_type" value="'+fieldType+'"><input class="required" id="field_'+id+'_name" name="field_'+id+'_name" type="text" value="'+getDefaultName(fieldType)+'" style="width:100px;" /></td><td>'+fieldType+'</td><td><input type="checkbox"  name="field_'+id+'_unique" /></td>';
 
     if (simple_mode) {
 	    html += '<td><input type="checkbox" checked name="field_'+id+'_required" /> </td>'
@@ -179,9 +189,13 @@ function addField(fieldType) {
 	}
 	html += '</tr>';
     $('#fields').append(html);
+	$('#ordering').append('<option value="'+id+'" id="ordering_'+id+'" field_id="'+id+'">unamed '+fieldType+' field</option>');
+
 	id += 1;
+	updateFieldNames();
 	$('#fields').show();
 	createModel();
+	$('#ordering_tr').show();
 }
 
 function getFilePath() {
@@ -256,12 +270,22 @@ $(function() {
 	});
 	$('input').live('focusout', function() {
 	    createModel();
+		updateFieldNames();
 		$('#note_about_code_updating').toggle();
 	});
 	$('input').live('focusin', function() {
 	    createModel();
 		$('#note_about_code_updating').toggle();
 	});
+	$('#ordering').live('change', function(){ 
+	    var field_id = $('#ordering option:selected').attr('field_id');
+		var label = 'unamed field';
+		if ($('#field_'+field_id+'_name').val() != '') {
+		    label = $('#field_'+field_id+'_name').val();
+        }
+		$('#ordered_fields').append('<li id="ordered_field_'+field_id+'"><input type="hidden" name="ordered_'+field_id+'_name" value="'+label+'" /><input type="button" value="X" onclick="$(\'#ordered_field_'+field_id+'\').remove();"/> <span>'+label+'</span> <input type="checkbox" name="ordered_'+field_id+'_descending"> Descending</li>');
+		createModel();
+    });
 	$('textarea').focusout(function() {
 	    createModel();
 	});
@@ -353,9 +377,11 @@ display:none;
 display:none;
 }
 
-#note_about_code_updating {
+#note_about_code_updating, #ordering_tr {
 display:none;
 }
+
+
 	</style>
 {% endblock %}
 {% block coltype %}colMS{% endblock %}
@@ -378,7 +404,14 @@ Boxes with red border must be filled out<br/>
 <strong>App:</strong> <select id="apps" class="required">
 
 </select><span id="is_app_installed"></span><br/>
-<strong>Model name:</strong> <input type="text" id="model_name" name="name" class="required" /><br/>
+<table style="width:100%;"><tr><th style="width:100px;">Model name:</th><td><input type="text" id="model_name" name="name" class="required" /></td></tr>
+<tr id="ordering_tr"><th style="width:100px;">Ordering:</th><td>
+<ol id="ordered_fields"></ol>
+<strong>Add field:</strong> <select id="ordering">
+<option></option>
+</select>
+</td></tr>
+</table>
 <table id="choices">
 <tr><th style="width:25px;"></th><th>Value</th><th>Label</th></tr>
 </table>

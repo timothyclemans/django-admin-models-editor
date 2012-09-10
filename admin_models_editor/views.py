@@ -47,6 +47,10 @@ def get_choice_id(key):
     
 def get_field_ids(post_dict):    
     return sorted(set([get_field_id(i) for i in post_dict.keys() if i.startswith('field_')]))
+
+def get_ordered_ids(post_dict):    
+    return sorted(set([get_field_id(i) for i in post_dict.keys() if i.startswith('ordered_')]))    
+
 def get_choices_ids(post_dict):    
     return sorted(set([get_choices_id(i) for i in post_dict.keys() if i.startswith('choices_')]))
 def get_choice_ids(choices_id, post_dict):    
@@ -257,6 +261,15 @@ def create_model(request):
             if not field['choices'] == 'no_choices':
                 arguments.append("choices=%s" % (field['choices']))
         code += "    %s = models.%s(%s)\n" % (field['name'], get_field_class(field['type']), ', '.join(arguments))
+    
+    ordered_ids = get_ordered_ids(request.POST)
+    ordered_field_names = ', '.join(["'-%s'" % (request.POST['field_%s_name' % (i)]) if 'ordered_%s_descending' % (i) in request.POST else "'%s'" % (request.POST['field_%s_name' % (i)]) for i in ordered_ids])
+    if ordered_ids:
+        code += """
+    class Meta:
+        ordering = [%s]
+""" % (ordered_field_names)
+        
     if def_lines:
         code += '\n' + def_lines
     else:
@@ -286,6 +299,6 @@ def create_model(request):
             f.close()
     
     
-    response_data = {'code': code, 'model_name': model_name}
+    response_data = {'post_dict': str(request.POST), 'code': code, 'model_name': model_name}
         
     return HttpResponse(json.dumps(response_data), mimetype="application/json")    
