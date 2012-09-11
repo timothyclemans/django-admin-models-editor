@@ -13,7 +13,7 @@ var char_field_ids = [];
 var selected_choices = [];
 var char_default = true;
 function showDebug() {
-    $('#debug').html('char field ids: ' + char_field_ids + '<br/>selected choices ids: ' + char_field_ids);
+    $('#debug').html('apps: '+apps);
 }
 
 function createModel() {
@@ -34,17 +34,14 @@ function saveModel() {
 	var content = 'save=True&'+$("#create_model_form").serialize();
     $('#last_code').val($('#code').val());
 	$.post('/admin/create_model/', content,function(response){
-	  $('#code').val(response);
-	  if (response.refresh) {
-	      location.reload(true);
-	  }
+        location.reload(true);
 	});
 }
 
 function listApps() {
 	$.get('/admin/create_model/', 'list_apps=true',function(response){
 	  $('#apps').html('');
-	  apps.concat(response.apps);
+	  window.apps = response.apps;
 	  for(var i=0; i<response.apps.length; i++) {
 	    $('#apps').append('<option id="'+i+'" value="'+response.apps[i][1]+'">'+response.apps[i][0]+'</option>') ;
 	  }
