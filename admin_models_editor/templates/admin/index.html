@@ -277,8 +277,12 @@ $(function() {
 		updateFieldNames();
 		$('#note_about_code_updating').toggle();
 	});
-	$('input').live('focusin', function() {
+	$('input[type="checkbox"]').live('change', function() {
 	    createModel();
+		updateFieldNames();
+	});
+	$('input').live('focusin', function() {
+	    //createModel();
 		$('#note_about_code_updating').toggle();
 	});
 	$('#ordering').live('change', function(){ 
@@ -290,6 +294,10 @@ $(function() {
 		$('#ordered_fields').append('<li id="ordered_field_'+field_id+'"><input type="hidden" name="ordered_'+field_id+'_name" value="'+label+'" /><input type="button" value="X" onclick="$(\'#ordered_field_'+field_id+'\').remove();createModel();"/> <span>'+label+'</span> <input type="checkbox" name="ordered_'+field_id+'_descending" onclick="createModel();"> Descending</li>');
 		createModel();
     });
+	$('textarea').live('focusin', function() {
+	    //createModel();
+		$('#note_about_code_updating').toggle();
+	});
 	$('textarea').focusout(function() {
 	    createModel();
 		$('#note_about_code_updating').toggle();
