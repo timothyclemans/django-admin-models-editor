@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 import os
 import json
 import logging
@@ -74,6 +74,34 @@ def get_field_class(field_type):
     
 def create_model(request):
     request.POST = request.POST.copy()
+    if 'create_app' in request.POST:
+        os.system('python manage.py startapp %s' % (request.POST['app_name']))
+        app_name = request.POST['app_name']
+        settings_path = ''
+        if 'settings.py' in os.listdir('.'):
+            settings_path = 'settings.py'
+        else:
+            for dir in [i for i in os.listdir('.') if os.path.isdir(i)]:
+                if 'settings.py' in os.listdir(dir):
+                    settings_path = os.path.join(dir, 'settings.py')
+        f = open(settings_path, 'r')
+        settings_lines = f.readlines()
+        f.close()
+        for i, line in enumerate(settings_lines):
+             if line.startswith('INSTALLED_APPS = ('):
+                 start = i
+                 break
+        for i, line in enumerate(settings_lines[start:]):
+             if line.startswith(')'):
+                 stop = start + i
+                 break
+        new_app = "    '%s',\n" % (app_name)
+        settings_lines.insert(stop, new_app)
+        new_settings = ''.join(settings_lines)
+        f = open(settings_path, 'w')
+        f.write(new_settings)
+        f.close()
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
     if 'is_simple_mode' in request.GET:
         response_data = {'is_simple_mode': is_simple_mode}
         
@@ -301,22 +329,27 @@ def create_model(request):
     def __unicode__(self):
         return ''
 """
-    
+    cmd_output = ''
+    refresh = False
     #response += str(request.POST.items())
     if 'save' in request.POST:
+        print 'SAVE =========\n' * 50
+        print 
+        filepath = request.POST['file_path'].strip()
         try:
-            f = open(request.POST['file_path'], 'r')
-            file = f.read()
+            f = open(filepath, 'r')
+            codefile = f.read()
             f.close()
-            f = open(request.POST['file_path'], 'w')
-            f.write(file + '\n' + code)
+            f = open(filepath, 'w')
+            f.write(codefile + '\n' + code)
             f.close()
         except IOError as e:
-            f = open(request.POST['file_path'], 'w')
+            f = open(filepath, 'w')
             f.write('from django.db import models\n\n' + code)
             f.close()
+        cmd_output = os.popen('python manage.py syncdb').read()
+        refresh = True
     
-    
-    response_data = {'post_dict': str(request.POST), 'new_field_names': new_field_names, 'code': code, 'model_name': model_name}
+    response_data = {'post_dict': str(request.POST), 'new_field_names': new_field_names, 'code': code, 'model_name': model_name, 'cmd_output': cmd_output, 'refresh': refresh}
         
     return HttpResponse(json.dumps(response_data), mimetype="application/json")    

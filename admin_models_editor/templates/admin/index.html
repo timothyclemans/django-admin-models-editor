@@ -35,6 +35,9 @@ function saveModel() {
     $('#last_code').val($('#code').val());
 	$.post('/admin/create_model/', content,function(response){
 	  $('#code').val(response);
+	  if (response.refresh) {
+	      location.reload(true);
+	  }
 	});
 }
 
@@ -396,9 +399,17 @@ display:none;
 
 {% block content_title %}
 {% if title %}<h1>{{ title }}</h1>{% endif %}
+<div id="app_editor">
+<form action="/admin/create_model/" class="module" method="post" id="create_app">
+{% csrf_token %}
+<input type="hidden" name="create_app" value="true" />
+<strong>App name: <input type="text" name="app_name" value=""/><input type="submit" value="Create app"/>
+</form>
+</div>
 <input type="button" value="Create model" id="show_model_editor" /><input type="button" value="Hide model creator" id="hide_model_editor" /><br/>
+
 <div id="model_editor">
-<form action="/create_model/" class="module" method="post" id="create_model_form">
+<form action="/admin/create_model/" class="module" method="post" id="create_model_form">
 {% csrf_token %}
 <div id="debug">
 
