@@ -215,7 +215,7 @@ function addChoice(target_choices_id) {
 }
 
 function addChoices() {
-    $('#choices').show().append('<tr class="choices_'+choices_id+'" id="choices_'+choices_id+'" style="background:#ccc;"><th><input type="button" value="X" onclick="removeChoice('+choices_id+')"/></th><th colspan="2">Choices name: <input type="text" value="_CHOICES" id="choices_'+choices_id+'_name" name="choices_'+choices_id+'_name" ><input type="button" value="Add choice" onclick="addChoice('+choices_id+')"/></th></tr>');
+    $('#choices').show().append('<tr class="choices_'+choices_id+'" id="choices_'+choices_id+'" style="background:#ccc;"><th><input type="button" value="X" onclick="removeChoices('+choices_id+')"/></th><th colspan="2">Choices name: <input type="text" value="_CHOICES" id="choices_'+choices_id+'_name" name="choices_'+choices_id+'_name" ><input type="button" value="Add choice" onclick="addChoice('+choices_id+')"/></th></tr>');
 	window.choices_choice_ids[choices_id] = 0; 
 	addChoice(choices_id);
 
