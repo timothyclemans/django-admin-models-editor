@@ -287,7 +287,7 @@ $(function() {
 		if ($('#field_'+field_id+'_name').val() != '') {
 		    label = $('#field_'+field_id+'_name').val();
         }
-		$('#ordered_fields').append('<li id="ordered_field_'+field_id+'"><input type="hidden" name="ordered_'+field_id+'_name" value="'+label+'" /><input type="button" value="X" onclick="$(\'#ordered_field_'+field_id+'\').remove();"/> <span>'+label+'</span> <input type="checkbox" name="ordered_'+field_id+'_descending"> Descending</li>');
+		$('#ordered_fields').append('<li id="ordered_field_'+field_id+'"><input type="hidden" name="ordered_'+field_id+'_name" value="'+label+'" /><input type="button" value="X" onclick="$(\'#ordered_field_'+field_id+'\').remove();createModel();"/> <span>'+label+'</span> <input type="checkbox" name="ordered_'+field_id+'_descending" onclick="createModel();"> Descending</li>');
 		createModel();
     });
 	$('textarea').focusout(function() {
