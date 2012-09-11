@@ -292,6 +292,7 @@ $(function() {
     });
 	$('textarea').focusout(function() {
 	    createModel();
+		$('#note_about_code_updating').toggle();
 	});
 	var debug_interval = setInterval( showDebug, 1000);
 	var list_choices_interval = setInterval( listChoices, 500);
