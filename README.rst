@@ -36,7 +36,15 @@ To do
 =====
 
 * Update the form based on changes to the code
-  * Change model name if model name changed in code DONE
-  * Change field names if field names changed in code DONE
+
+  - Change model name if model name changed in code DONE
+  
+  - Change field names if field names changed in code DONE
+  
+  - Remove field if field deleted from code
+  
+  - Change field type if field type changed in code
+  
 * Make models editable
+
 * Make a graphical interface, see http://gaesql.appspot.com/ and http://code.google.com/p/uml-to-django/
