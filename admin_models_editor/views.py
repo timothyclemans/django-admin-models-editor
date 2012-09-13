@@ -102,8 +102,11 @@ def create_model(request):
         
         return HttpResponse(json.dumps(response_data), mimetype="application/json")
     if 'create_app' in request.POST:
+        project_name = os.getcwd().strip('/').split('/')[-1]
         os.system('python manage.py startapp %s' % (request.POST['app_name']))
         app_name = request.POST['app_name']
+        
+        # add the app to INSTALLED_APPS
         settings_path = ''
         if 'settings.py' in os.listdir('.'):
             settings_path = 'settings.py'
@@ -128,6 +131,54 @@ def create_model(request):
         f = open(settings_path, 'w')
         f.write(new_settings)
         f.close()
+        
+        # include the app's urls in the main urls.py
+        urls_path = ''
+        if 'urls.py' in os.listdir('.'):
+            urls_path = 'urls.py'
+        else:
+            urls_path = os.path.join(os.getcwd(), os.path.join(project_name, 'urls.py'))
+        f = open(urls_path, 'r')
+        urls_lines = f.readlines()
+        f.close()
+        for i, line in enumerate(urls_lines):
+             if line.startswith('urlpatterns = patterns'):
+                 start = i
+                 break
+        for i, line in enumerate(urls_lines[start:]):
+             if line.startswith(')'):
+                 stop = start + i
+                 break
+        new_urlpattern = "    url(r'^%s/', include('%s')),\n" % (app_name, app_name)
+        urls_lines.insert(stop, new_urlpattern)
+        new_urls = ''.join(urls_lines)
+        f = open(urls_path, 'w')
+        f.write(new_urls)
+        f.close()        
+        
+        # create app's urls.py
+        f = open('%s/urls.py' % (app_name), 'w')
+        urls_code = """from django.conf.urls import patterns, include, url
+from django.views.generic.simple import direct_to_template
+
+urlpatterns = patterns('',
+    url(r'^$', direct_to_template, {"template": "%s/index.html", "extra_context": {}}, name='%s_index'),
+)
+        
+        """
+        urls_code = urls_code % (app_name, app_name)
+        f.write(urls_code)
+        f.close()
+        
+        # create template directory
+        if not 'templates' in os.listdir('.'):
+            os.mkdir('templates')
+        os.mkdir('templates/%s' % (app_name))
+        
+        
+        
+        
+        
         if south_installed:
             os.system('python manage.py schemamigration %s --initial' % (app_name))
             os.system('python manage.py migrate %s')
@@ -390,6 +441,33 @@ def create_model(request):
             os.system('python manage.py migrate %s')
         else:
             cmd_output = os.popen('python manage.py syncdb').read()
+            
+        forms_py_path = filepath.replace('models', 'forms')
+        model_form_code = """class %sForm(ModelForm):
+    class Meta:
+        model = %s
+""" % (model_name, model_name)
+        try:
+            f = open(forms_py_path, 'r')
+            forms_file = f.read()
+            f.close()
+            f = open(forms_py_path, 'w')
+            
+            if 'from django.forms import ModelForm' in forms_file:
+                f.write(forms_file + '\n' + model_form_code)
+            f.close()
+        except:
+            f = open(forms_py_path, 'w')
+            model_form_code = """from django import forms
+from django.forms import ModelForm
+from models import *
+            
+class %sForm(ModelForm):
+    class Meta:
+        model = %s
+""" % (model_name, model_name)
+            f.write(model_form_code)
+            f.close()
         refresh = True
     
     response_data = {'post_dict': str(request.POST), 'new_field_names': new_field_names, 'code': code, 'model_name': model_name, 'cmd_output': cmd_output, 'refresh': refresh}
