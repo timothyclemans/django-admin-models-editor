@@ -37,6 +37,8 @@ Timothy Clemans <timothy.clemans@gmail.com>
 To do
 =====
 
+* Validate the models so admins can't make the site unuseable
+
 * Update the form based on changes to the code
 
   - Change model name if model name changed in code DONE

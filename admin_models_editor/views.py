@@ -176,6 +176,7 @@ def create_model(request):
                  break
         installed_apps = '\n'.join(settings_lines[start:stop])
         apps = [(dirname.strip('./'), os.path.join(os.path.join(os.getcwd(), dirname.strip('./')), "models.py"), dirname.strip('./') in installed_apps) for dirname, dirnames, filenames in os.walk('.') if 'views.py' in os.listdir(dirname) or 'urls.py' in os.listdir(dirname)]
+        apps = sorted(apps, key=lambda x: x[0])
         response_data = {'apps': apps}
         
         return HttpResponse(json.dumps(response_data), mimetype="application/json")
