@@ -98,18 +98,6 @@ def create_model(request):
     if 'create_app' in request.POST:
         os.system('python manage.py startapp %s' % (request.POST['app_name']))
         app_name = request.POST['app_name']
-        # validate app_name
-        is_app_name_valid = re.match(r'([a-z])([a-z0-9_]+)([a-z0-9])', app_name)
-        if not is_app_name_valid:
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
-        try:
-            import_module(app_name)
-        except ImportError:
-            pass
-        else:
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
-        if app_name in os.listdir('.'):
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
         settings_path = ''
         if 'settings.py' in os.listdir('.'):
             settings_path = 'settings.py'
