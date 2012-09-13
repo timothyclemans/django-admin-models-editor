@@ -4,6 +4,12 @@ import json
 import logging
 import re
 
+try:
+    import south
+    south_installed = True
+except:
+    south_installed = False
+
 is_simple_mode = False
 try:
     from django.conf import settings
@@ -122,6 +128,9 @@ def create_model(request):
         f = open(settings_path, 'w')
         f.write(new_settings)
         f.close()
+        if south_installed:
+            os.system('python manage.py schemamigration %s --initial' % (app_name))
+            os.system('python manage.py migrate %s')
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
     if 'is_simple_mode' in request.GET:
         response_data = {'is_simple_mode': is_simple_mode}
@@ -216,6 +225,13 @@ def create_model(request):
             if line.startswith('    def'):
                 def_lines = '\n'.join(request.POST['code'].split('\n')[i:])
                 break
+    default_deflines = """
+    def __unicode__(self):
+        return ''
+"""
+    default_deflines = [i.strip() for i in default_deflines.strip().split('\n') if i]
+    if [i.strip() for i in def_lines.strip().split('\n') if i] == default_deflines:
+        def_lines = ''
     last_code_from_input = request.POST['last_code'].split('\n')[0]
     # check if model name in source changed
     model_name_in_last_source = ''
@@ -368,7 +384,11 @@ def create_model(request):
             f = open(filepath, 'w')
             f.write('from django.db import models\n\n' + code)
             f.close()
-        cmd_output = os.popen('python manage.py syncdb').read()
+        if south_installed:
+            os.system('python manage.py schemamigration %s --auto' % (app_name))
+            os.system('python manage.py migrate %s')
+        else:
+            cmd_output = os.popen('python manage.py syncdb').read()
         refresh = True
     
     response_data = {'post_dict': str(request.POST), 'new_field_names': new_field_names, 'code': code, 'model_name': model_name, 'cmd_output': cmd_output, 'refresh': refresh}

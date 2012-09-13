@@ -263,16 +263,17 @@ $(function() {
 		if (event.which == 32) {
 			$('#app_name').val($('#app_name').val() + '_');
 		}
-				
-	    $.get('/admin/create_model/', 'is_app_name_valid='+$('#app_name').val(),function(response){
-		    if (response.is_valid) {
-			    $('#create_app_button').show();
-			    $('#app_name_error').hide();
-		    } else {
-			    $('#create_app_button').hide();
-			    $('#app_name_error').show();
-		    }
-		});
+		if ($('#app_name').val()) {		
+			$.get('/admin/create_model/', 'is_app_name_valid='+$('#app_name').val(),function(response){
+				if (response.is_valid) {
+					$('#create_app_button').show();
+					$('#app_name_error').hide();
+				} else {
+					$('#create_app_button').hide();
+					$('#app_name_error').show();
+				}
+			});
+		}
 	});
     createModel();
     $.get('/admin/create_model/', 'is_simple_mode=True',function(response){
