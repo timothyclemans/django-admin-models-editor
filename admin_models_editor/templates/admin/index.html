@@ -249,6 +249,31 @@ function removeChoice(target_choices_id, target_choice_id) {
 }
 
 $(function() {
+    $('#app_name').keydown(function(event) {
+		event.preventDefault();
+		if (event.which == 8) {
+		    $('#app_name').val($('#app_name').val().slice(0, -1));
+		}
+		if (event.which >= 48 && event.which <= 57) {
+			$('#app_name').val($('#app_name').val() + String.fromCharCode(event.which));
+		}
+		if (event.which >= 65 && event.which <= 90) {
+			$('#app_name').val($('#app_name').val() + String.fromCharCode(event.which + 32));
+		}
+		if (event.which == 32) {
+			$('#app_name').val($('#app_name').val() + '_');
+		}
+				
+	    $.get('/admin/create_model/', 'is_app_name_valid='+$('#app_name').val(),function(response){
+		    if (response.is_valid) {
+			    $('#create_app_button').show();
+			    $('#app_name_error').hide();
+		    } else {
+			    $('#create_app_button').hide();
+			    $('#app_name_error').show();
+		    }
+		});
+	});
     createModel();
     $.get('/admin/create_model/', 'is_simple_mode=True',function(response){
 	    if (response.is_simple_mode) {
@@ -390,8 +415,12 @@ display:none;
 display:none;
 }
 
-#note_about_code_updating, #ordering_tr {
+#note_about_code_updating, #ordering_tr, #app_name_error, #create_app_button {
 display:none;
+}
+
+#app_name_error strong {
+color:red;
 }
 
 
@@ -409,7 +438,7 @@ display:none;
 <form action="/admin/create_model/" class="module" method="post" id="create_app">
 {% csrf_token %}
 <input type="hidden" name="create_app" value="true" />
-<strong>App name: <input type="text" name="app_name" value=""/><input type="submit" value="Create app"/>
+<strong>App name: <input type="text" id="app_name" name="app_name" value=""/><input id="create_app_button" type="submit" value="Create app"/> <span id="app_name_error"><strong>Error:</strong> there's an error with the app name</span>
 </form>
 </div>
 <input type="button" value="Create model" id="show_model_editor" /><input type="button" value="Hide model creator" id="hide_model_editor" /><br/>

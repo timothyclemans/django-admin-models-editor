@@ -2,6 +2,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 import os
 import json
 import logging
+import re
 
 is_simple_mode = False
 try:
@@ -73,10 +74,42 @@ def get_field_class(field_type):
         return field_type + 'Field'
     
 def create_model(request):
+    import re
+    from django.utils.importlib import import_module
     request.POST = request.POST.copy()
+    if 'is_app_name_valid' in request.GET:
+        is_valid = True
+        app_name = request.GET['is_app_name_valid']
+        # validate app_name
+        is_app_name_valid = re.match(r'^[a-z][a-z0-9_]+[a-z0-9]$', app_name)
+        if not is_app_name_valid:
+            is_valid = False
+        try:
+            import_module(app_name)
+        except ImportError:
+            pass
+        else:
+            is_valid = False
+        if app_name in os.listdir('.'):
+            is_valid = False
+        response_data = {'is_valid': is_valid}
+        
+        return HttpResponse(json.dumps(response_data), mimetype="application/json")
     if 'create_app' in request.POST:
         os.system('python manage.py startapp %s' % (request.POST['app_name']))
         app_name = request.POST['app_name']
+        # validate app_name
+        is_app_name_valid = re.match(r'([a-z])([a-z0-9_]+)([a-z0-9])', app_name)
+        if not is_app_name_valid:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        try:
+            import_module(app_name)
+        except ImportError:
+            pass
+        else:
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        if app_name in os.listdir('.'):
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
         settings_path = ''
         if 'settings.py' in os.listdir('.'):
             settings_path = 'settings.py'
